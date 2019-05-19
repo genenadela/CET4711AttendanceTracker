@@ -6,10 +6,10 @@
  * 
  * 
  */
- /*
+
 #include <SPI.h>
 #include <Adafruit_PN532.h>
-*/
+
 #include <Wire.h> 
 
 
@@ -20,17 +20,31 @@ LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 20 chars
 //#define ADC_REF 5
 //#define GROVE_VCC 5//VCC of the grove interface is normally 5v
 #define FULL_ANGLE 300//full value of the rotary angle is 300 degrees
-/*
+
 #define PN532_SCK  (2)
 #define PN532_MOSI (3)
 #define PN532_SS   (4)
 #define PN532_MISO (5)
-*/
-int LIST_SIZE = 11;
 
-char *myStrings[]={"Apple", "Pear", "Bread",
-                    "Juice", "Chips","Soup","Oranges",
-                    "Meat","Cheese","Cookies","Crackers"};
+int LIST_SIZE = 11;
+int degrees;
+int index;
+int sensor_value; 
+int StudentListSize;
+
+char *classList[11][2]={
+  {"Arlo", "Absent"},
+  {"John", "Absent"},
+  {"Sera", "Absent"},
+  {"Remi", "Absent"},
+  {"Blyke","Absent"},
+  {"Isen", "Absent"},
+  {"Cecille", "Absent"},
+  {"Claire", "Absent"},
+  {"Elaine", "Absent"},
+  {"Meili", "Absent"},
+  {"Ventus", "Absent"}
+};
 
 void setup() {
 
@@ -46,16 +60,11 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-    int degrees;
+    
+    index = degrees/LIST_SIZE;
+    sensor_value = analogRead(ROTARY_ANGLE_SENSOR);
+    StudentListSize = map(sensor_value, 680, 0, 1, LIST_SIZE);
     degrees = getDegree();
-    
-    int index = degrees/LIST_SIZE;
-
-    int sensor_value = analogRead(ROTARY_ANGLE_SENSOR);
-    
-    int StudentListSize = map(sensor_value, 1000, 100, 1, LIST_SIZE);
-
     Serial.println(sensor_value);
 
     
@@ -63,15 +72,29 @@ void loop() {
     //Print index to screen
     lcd.clear(); //neaded to clear characters from screen
     lcd.setCursor(0,0);
-    lcd.print(myStrings[StudentListSize-1]);
+    lcd.print(classList[StudentListSize-1][0]);
+    getSpacing(classList[StudentListSize-1][0],classList[StudentListSize-1][1]);
+    lcd.print(classList[StudentListSize-1][1]);
     lcd.setCursor(0, 1);
-    lcd.print(myStrings[StudentListSize]);
+    lcd.print(classList[StudentListSize][0]);
+    getSpacing(classList[StudentListSize][0],classList[StudentListSize][1]);
+    lcd.print(classList[StudentListSize][1]);
     lcd.setCursor(0, 2);
-    lcd.print(myStrings[StudentListSize+1]);
+    lcd.print(classList[StudentListSize+1][0]);
+    getSpacing(classList[StudentListSize+1][0],classList[StudentListSize+1][1]);
+    lcd.print(classList[StudentListSize+1][1]);
     lcd.setCursor(0, 3);
-    lcd.print(myStrings[StudentListSize+2]);
+    lcd.print(classList[StudentListSize+2][0]);
+    getSpacing(classList[StudentListSize+2][0],classList[StudentListSize+2][1]);
+    lcd.print(classList[StudentListSize+2][1]);
 
     delay(100);
+}
+
+void getSpacing(String studentName, String studentStatus){
+    for (int i=0; i<(20-studentStatus.length()-studentName.length()); i++) {
+      lcd.print(" ");
+    }
 }
 
 int getDegree()
