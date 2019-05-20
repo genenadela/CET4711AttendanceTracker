@@ -1,6 +1,3 @@
-
-
-
 /* Attendance Tracker
  *  Gene and Ruposri
  * 
@@ -91,28 +88,33 @@ void loop() {
   if (success) {
     // Display some basic information about the card
     Serial.println("Found an ISO14443A card");
-    //idString=convertUIDString(uid);
-    for (int k=0; k<5; k++) { 
-    idString.concat(uid[k]);
-    }
-    Serial.print(idString);
+    for (int k=0; k<5; k++) { //Form ID into String to be compared
+        idString.concat(uid[k]);
+      }
+    //Serial.print(idString);
+    
     for (int g=0; g<LIST_SIZE; g++) {
+      
       if (idString==classList[g][2]){ //compares the card key to the assigned key for each student
-        if(classList[g][1]=="Absent") {
-        buzzerAlert();
-        Serial.print("   ");
-        String timeAttendHour=String(now.hour());
-        String timeAttendMinute=String(now.minute());
-        timeAttend.concat(timeAttendHour);
-        timeAttend.concat(":");
-        timeAttend.concat(timeAttendMinute);
-        
-        Serial.print("timeattend:  ");
-        Serial.println(timeAttend);
-        timeAttend.toCharArray(timebuff,6);
-        classList[g][1]=timebuff;
-        Serial.print("Timebuff:  ");
-        Serial.println(timebuff);
+        if(classList[g][1]=="Absent") { //Check for Absent Status
+          buzzerAlert();
+          Serial.print("   ");
+          String timeAttendHour=AddLeadZero(now.hour());
+          String timeAttendMinute=AddLeadZero(now.minute());
+          timeAttend.concat(timeAttendHour);
+          timeAttend.concat(":");
+          timeAttend.concat(timeAttendMinute);
+          
+          Serial.print("timeattend:  ");
+          Serial.println(timeAttend);
+          timeAttend.toCharArray(timebuff,6);
+          classList[g][1]=timebuff;
+          Serial.print("Timebuff:  ");
+          Serial.println(timebuff);
+          //idString="";
+        }
+        else {
+          
         }
       }
       
@@ -139,6 +141,26 @@ String convertUIDString(uint8_t cardnumber) {
     }
 }
 */
+
+boolean checkID(String id) {
+  String listRef;
+  
+  for(int i=0; i<LIST_SIZE; i++) {
+    listRef=classList[i][2];
+   
+  }
+}
+
+String AddLeadZero(int num) {
+  String fullnum;
+  if (num < 10) {
+    fullnum = "0"+String(num);
+  }
+  else {
+    fullnum=String(num);
+  }
+  return fullnum;
+}
 
 void SendListBluetooth() {
   for (int i=0; i<LIST_SIZE; i++) {
