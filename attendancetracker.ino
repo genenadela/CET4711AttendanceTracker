@@ -1,4 +1,3 @@
-#include <RTClib.h>
 
 
 
@@ -15,6 +14,8 @@
 #include <Adafruit_PN532.h>
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
+#include <RTClib.h>
+//#include <SoftwareSerial.h>
 
 #define ROTARY_ANGLE_SENSOR A0
 #define FULL_ANGLE 300//full value of the rotary angle is 300 degrees
@@ -24,17 +25,21 @@
 #define PN532_SS   (4)
 #define PN532_MISO (5)
 
+//SoftwareSerial bluetooth(10,11); //Software RX = D10, Goes to Module TX(Yellow), Software TX = D11, goes to module RX(Orange)
+
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 20 chars and 4 line display
 Adafruit_PN532 cardscan(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 
 RTC_DS1307 rtc;
 
+int buzzerPin = 12;
 int LIST_SIZE = 11;
 int degrees;
 int index;
 int sensor_value; 
 int StudentListSize;
 String timeAttend;
+char c;
 
 char *classList[11][3]={
   {"Arlo", "Absent", "77157136640"},
@@ -51,14 +56,16 @@ char *classList[11][3]={
 };
 
 void setup() {
-
   Serial.begin(9600);
+  Serial1.begin(9600);
+  
   // put your setup code here, to run once:
   lcd.init();  //initialize the lcd
   lcd.backlight();  //open the backlight 
   cardscan.begin();
   cardscan.SAMConfig();
-  
+  pinMode(buzzerPin, OUTPUT);
+  digitalWrite(buzzerPin, HIGH);
   pinMode(ROTARY_ANGLE_SENSOR, INPUT);
   //pinMode(BUTTON,INPUT);
 
@@ -72,10 +79,13 @@ void loop() {
     uint8_t uidLength; 
     String idString;
     DateTime now = rtc.now();
-  
-    //Serial.println(sensor_value);
+    char timebuff[6];
+    timeAttend="";
+    Serial.println(sensor_value);
 
-    
+  if(Serial1.available()){
+    c=Serial1.read();
+  }
   success=cardscan.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength,100);
   
   if (success) {
@@ -87,21 +97,30 @@ void loop() {
     }
     Serial.print(idString);
     for (int g=0; g<LIST_SIZE; g++) {
-      if (idString==classList[g][2]){
+      if (idString==classList[g][2]){ //compares the card key to the assigned key for each student
+        if(classList[g][1]=="Absent") {
+        buzzerAlert();
         Serial.print("   ");
-        timeAttend.concat(now.hour());
+        String timeAttendHour=String(now.hour());
+        String timeAttendMinute=String(now.minute());
+        timeAttend.concat(timeAttendHour);
         timeAttend.concat(":");
-        timeAttend.concat(now.minute());
-        timeAttend.concat(":");
-        timeAttend.concat(now.second());
+        timeAttend.concat(timeAttendMinute);
+        
+        Serial.print("timeattend:  ");
         Serial.println(timeAttend);
-        String dectime = timeAttend;
-        classList[g][1]=dectime;
+        timeAttend.toCharArray(timebuff,6);
+        classList[g][1]=timebuff;
+        Serial.print("Timebuff:  ");
+        Serial.println(timebuff);
+        }
       }
+      
     }
   }
   
 DisplayStudentList();
+SendListBluetooth();
     
     
     
@@ -120,6 +139,27 @@ String convertUIDString(uint8_t cardnumber) {
     }
 }
 */
+
+void SendListBluetooth() {
+  for (int i=0; i<LIST_SIZE; i++) {
+    Serial1.print(classList[i][0]);
+    Serial1.print("   ");
+    Serial1.print(classList[i][1]);
+    Serial1.print(",");
+  }
+  Serial1.println();
+}
+
+void buzzerAlert() {
+  digitalWrite(buzzerPin, LOW);
+  delay(100);
+  digitalWrite(buzzerPin, HIGH);
+  delay(100);
+  digitalWrite(buzzerPin, LOW);
+  delay(100);
+  digitalWrite(buzzerPin, HIGH);
+}
+
 void DisplayStudentList() {
     index = degrees/LIST_SIZE;
     sensor_value = analogRead(ROTARY_ANGLE_SENSOR);
